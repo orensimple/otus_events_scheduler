@@ -1,3 +1,3 @@
-# otus_hw1_8
+# otus_events
 
-Calendar
+Scheduler
