@@ -1,0 +1,16 @@
+log_file: "./main.log"
+
+log_level:
+  command: "Debug"
+  file: "Info"
+
+http_listen:
+  ip: "127.0.0.1"
+  port: 7002
+
+postgres:
+  ip: "127.0.0.1"
+  port: 5432
+  db: "events"
+  user: "user"
+  passwd: "password123"

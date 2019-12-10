@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+message Event {
+    int64 ID = 1;
+    string title = 2;
+    string text = 3;
+    string owner = 4;
+    google.protobuf.Timestamp start_time = 5;
+    google.protobuf.Timestamp end_time = 6;
+}
+
+message CreateEventRequest {
+    int64 ID = 1;
+    string title = 2;
+    string text = 3;
+    string owner = 4;
+    google.protobuf.Timestamp start_time = 5;
+    google.protobuf.Timestamp end_time = 6;
+}
+
+message CreateEventResponse {
+    oneof result {
+        Event event = 1;
+        string error = 2;
+    }
+}
+
+message UpdateEventRequest {
+    int64 ID = 1;
+    string title = 2;
+    string text = 3;
+    string owner = 4;
+    google.protobuf.Timestamp start_time = 5;
+    google.protobuf.Timestamp end_time = 6;
+}
+
+message UpdateEventResponse {
+    oneof result {
+        Event event = 1;
+        string error = 2;
+    }
+}
+
+message DeleteEventRequest {
+    int64 ID = 1;
+}
+
+message DeleteEventResponse {
+    oneof result {
+        string error = 1;
+    }
+}
+
+message GetEventsByTimeRequest {
+    string timeType = 1;
+}
+
+message GetEventsByTimeResponse {
+    repeated Event event = 1;
+    string error = 2;
+}
+
+service CalendarService {
+    rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse) {}
+    rpc UpdateEvent(UpdateEventRequest) returns (UpdateEventResponse) {}
+    rpc DeleteEvent(DeleteEventRequest) returns (DeleteEventResponse) {}
+    rpc GetEventsByTime(GetEventsByTimeRequest) returns (GetEventsByTimeResponse) {}
+}
