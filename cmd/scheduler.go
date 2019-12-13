@@ -31,7 +31,7 @@ var RootCmd = &cobra.Command{
 			TimeType: "month",
 		}
 
-		connAMQP, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+		connAMQP, err := amqp.Dial("amqp://guest:guest@myapp-rabbitmq:5672/")
 		if err != nil {
 			logger.ContextLogger.Errorf("Failed to connect to RabbitMQ", err.Error())
 		}
@@ -103,7 +103,7 @@ var RootCmd = &cobra.Command{
 
 func init() {
 	RootCmd.Flags().StringVar(&addr, "config", "./config", "")
-	RootCmd.Flags().StringVar(&server, "server", "localhost:8088", "host:port to connect to")
+	RootCmd.Flags().StringVar(&server, "server", "events-api:8088", "host:port to connect to")
 }
 
 func sendEvents(ctx context.Context, ch *amqp.Channel, resp *api.GetEventsByTimeResponse) {

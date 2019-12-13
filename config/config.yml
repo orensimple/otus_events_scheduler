@@ -9,8 +9,8 @@ http_listen:
   port: 7002
 
 postgres:
-  ip: "127.0.0.1"
+  ip: "myapp-db"
   port: 5432
   db: "events"
-  user: "user"
-  passwd: "password123"
+  user: "db-user"
+  passwd: "db-password"
