@@ -22,6 +22,8 @@ var RootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		config.Init(addr)
 		logger.InitLogger()
+		timer1 := time.NewTimer(10 * time.Second)
+		<-timer1.C
 		conn, err := grpc.Dial(server, grpc.WithInsecure())
 		if err != nil {
 			logger.ContextLogger.Errorf(" Cannot connect to GRPC server", err)
