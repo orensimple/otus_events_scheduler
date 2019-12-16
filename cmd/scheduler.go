@@ -22,11 +22,15 @@ var RootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		config.Init(addr)
 		logger.InitLogger()
-		timer1 := time.NewTimer(10 * time.Second)
-		<-timer1.C
 		conn, err := grpc.Dial(server, grpc.WithInsecure())
 		if err != nil {
-			logger.ContextLogger.Errorf(" Cannot connect to GRPC server", err)
+			logger.ContextLogger.Errorf("Cannot connect to GRPC server, retry after 30 second", err)
+			timer1 := time.NewTimer(30 * time.Second)
+			<-timer1.C
+			conn, err = grpc.Dial(server, grpc.WithInsecure())
+			if err != nil {
+				logger.ContextLogger.Errorf("Cannot retry connect to GRPC server", err)
+			}
 		}
 		client := api.NewCalendarServiceClient(conn)
 		req := &api.GetEventsByTimeRequest{
@@ -35,7 +39,13 @@ var RootCmd = &cobra.Command{
 
 		connAMQP, err := amqp.Dial("amqp://guest:guest@myapp-rabbitmq:5672/")
 		if err != nil {
-			logger.ContextLogger.Errorf("Failed to connect to RabbitMQ", err.Error())
+			logger.ContextLogger.Errorf("Failed to connect to RabbitMQ, retry after 30 second", err.Error())
+			timer1 := time.NewTimer(30 * time.Second)
+			<-timer1.C
+			connAMQP, err = amqp.Dial("amqp://guest:guest@myapp-rabbitmq:5672/")
+			if err != nil {
+				logger.ContextLogger.Errorf("Failed to retry connect to RabbitMQ", err.Error())
+			}
 		}
 		defer connAMQP.Close()
 
