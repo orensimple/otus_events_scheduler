@@ -142,11 +142,11 @@ var RootCmd = &cobra.Command{
 			}
 		}()
 
-		go func() {
+		/*go func() {
 			if err := httpServer.ListenAndServe(); err != nil {
 				logger.ContextLogger.Errorf("Unable to start a http server with metrics", err.Error())
 			}
-		}()
+		}()*/
 	},
 }
 
