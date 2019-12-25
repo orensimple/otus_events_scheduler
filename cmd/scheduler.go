@@ -123,11 +123,11 @@ var RootCmd = &cobra.Command{
 
 		logger.ContextLogger.Infof("Starting web server at %s\n", "events-scheduler:9120")
 
-		/*go func() {
+		go func() {
 			if err := httpServer.ListenAndServe(); err != nil {
 				logger.ContextLogger.Errorf("Unable to start a http server with metrics", err.Error())
 			}
-		}()*/
+		}()
 
 		logger.ContextLogger.Infof(" [*] Start to check events. To exit press CTRL+C")
 		go func() {
@@ -147,9 +147,6 @@ var RootCmd = &cobra.Command{
 				}
 			}
 		}()
-		if err := httpServer.ListenAndServe(); err != nil {
-			logger.ContextLogger.Errorf("Unable to start a http server with metrics", err.Error())
-		}
 	},
 }
 
