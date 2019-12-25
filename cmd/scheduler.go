@@ -137,7 +137,7 @@ var RootCmd = &cobra.Command{
 		}()
 
 		http.Handle("/metrics", promhttp.Handler())
-		logger.ContextLogger.Infof("Starting web server at %s\n", "events-reminder:9130")
+		logger.ContextLogger.Infof("Starting web server at %s\n", "events-scheduler:9120")
 		err = http.ListenAndServe("events-reminder:9130", nil)
 		if err != nil {
 			logger.ContextLogger.Errorf("http.ListenAndServer for metrics: %v\n", err.Error())
