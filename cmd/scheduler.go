@@ -2,13 +2,17 @@ package cmd
 
 import (
 	"context"
-	"log"
+	"net/http"
+	"os"
 	"strconv"
 	"time"
 
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/orensimple/otus_events_scheduler/config"
 	"github.com/orensimple/otus_events_scheduler/internal/grpc/api"
 	"github.com/orensimple/otus_events_scheduler/internal/logger"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"github.com/streadway/amqp"
 	"google.golang.org/grpc"
@@ -22,14 +26,33 @@ var RootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		config.Init(addr)
 		logger.InitLogger()
-		conn, err := grpc.Dial(server, grpc.WithInsecure())
+
+		// Create a metrics registry.
+		reg := prometheus.NewRegistry()
+		// Create some standard client metrics.
+		grpcMetrics := grpc_prometheus.NewClientMetrics()
+		// Register client metrics to registry.
+		reg.MustRegister(grpcMetrics)
+
+		conn, err := grpc.Dial(
+			server,
+			grpc.WithUnaryInterceptor(grpc_prometheus.UnaryClientInterceptor),
+			grpc.WithStreamInterceptor(grpc_prometheus.StreamClientInterceptor),
+			grpc.WithInsecure(),
+		)
 		if err != nil {
 			logger.ContextLogger.Errorf("Cannot connect to GRPC server, retry after 30 second", err)
 			timer1 := time.NewTimer(30 * time.Second)
 			<-timer1.C
-			conn, err = grpc.Dial(server, grpc.WithInsecure())
+			conn, err = grpc.Dial(
+				server,
+				grpc.WithUnaryInterceptor(grpc_prometheus.UnaryClientInterceptor),
+				grpc.WithStreamInterceptor(grpc_prometheus.StreamClientInterceptor),
+				grpc.WithInsecure(),
+			)
 			if err != nil {
 				logger.ContextLogger.Errorf("Cannot retry connect to GRPC server", err)
+				os.Exit(1)
 			}
 		}
 		client := api.NewCalendarServiceClient(conn)
@@ -45,6 +68,7 @@ var RootCmd = &cobra.Command{
 			connAMQP, err = amqp.Dial("amqp://guest:guest@myapp-rabbitmq:5672/")
 			if err != nil {
 				logger.ContextLogger.Errorf("Failed to retry connect to RabbitMQ", err.Error())
+				os.Exit(1)
 			}
 		}
 		defer connAMQP.Close()
@@ -92,6 +116,16 @@ var RootCmd = &cobra.Command{
 		}
 
 		ctx := context.Background()
+
+		// Create a HTTP server for prometheus.
+		httpServer := &http.Server{Handler: promhttp.HandlerFor(reg, promhttp.HandlerOpts{}), Addr: "events-scheduler:9120"}
+
+		logger.ContextLogger.Infof("Starting web server at %s\n", "events-scheduler:9120")
+
+		err = httpServer.ListenAndServe()
+		if err != nil {
+			logger.ContextLogger.Errorf("http.ListenAndServer for metrics: %v\n", err.Error())
+		}
 		logger.ContextLogger.Infof(" [*] Start to check events. To exit press CTRL+C")
 
 		uptimeTicker := time.NewTicker(5 * time.Second)
@@ -100,10 +134,10 @@ var RootCmd = &cobra.Command{
 			case <-uptimeTicker.C:
 				resp, err := client.GetEventsByTime(context.Background(), req)
 				if err != nil {
-					log.Fatal(err)
+					logger.ContextLogger.Errorf("Failed GetEventsByTime", err.Error())
 				}
 				if resp.GetError() != "" {
-					log.Fatal(resp.GetError())
+					logger.ContextLogger.Errorf("Failed response GetEventsByTime", resp.GetError())
 				} else {
 					sendEvents(ctx, ch, resp)
 				}
