@@ -136,16 +136,12 @@ var RootCmd = &cobra.Command{
 			}
 		}()
 
-		// Create a HTTP server for prometheus.
-		httpServer := &http.Server{Handler: promhttp.HandlerFor(reg, promhttp.HandlerOpts{}), Addr: "events-scheduler:9120"}
-
-		logger.ContextLogger.Infof("Starting web server at %s\n", "events-scheduler:9120")
-
-		//go func() {
-		if err := httpServer.ListenAndServe(); err != nil {
-			logger.ContextLogger.Errorf("Unable to start a http server with metrics", err.Error())
+		http.Handle("/metrics", promhttp.Handler())
+		logger.ContextLogger.Infof("Starting web server at %s\n", "events-reminder:9130")
+		err = http.ListenAndServe("events-reminder:9130", nil)
+		if err != nil {
+			logger.ContextLogger.Errorf("http.ListenAndServer for metrics: %v\n", err.Error())
 		}
-		//}()
 	},
 }
 
